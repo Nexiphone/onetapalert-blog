@@ -1,23 +1,30 @@
 import { MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/posts';
+import { locales, Locale } from '@/lib/i18n';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const posts = getAllPosts();
+  const entries: MetadataRoute.Sitemap = [];
 
-  const blogPosts = posts.map((post) => ({
-    url: `https://blog.nexitel.us/blog/${post.slug}`,
-    lastModified: new Date(post.date),
-    changeFrequency: 'monthly' as const,
-    priority: 0.8,
-  }));
-
-  return [
-    {
-      url: 'https://blog.nexitel.us',
+  // Add locale homepages
+  for (const locale of locales) {
+    entries.push({
+      url: `https://blog.nexitel.us/${locale}`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1.0,
-    },
-    ...blogPosts,
-  ];
+    });
+
+    // Add blog posts for each locale
+    const posts = getAllPosts(locale as Locale);
+    for (const post of posts) {
+      entries.push({
+        url: `https://blog.nexitel.us/${locale}/blog/${post.slug}`,
+        lastModified: new Date(post.date),
+        changeFrequency: 'monthly',
+        priority: 0.8,
+      });
+    }
+  }
+
+  return entries;
 }

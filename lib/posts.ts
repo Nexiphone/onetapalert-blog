@@ -3,8 +3,9 @@ import path from 'path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
+import { Locale, defaultLocale } from './i18n';
 
-const postsDirectory = path.join(process.cwd(), 'posts');
+const postsBaseDirectory = path.join(process.cwd(), 'posts');
 
 export interface PostMeta {
   slug: string;
@@ -28,7 +29,17 @@ function calculateReadingTime(content: string): number {
   return Math.ceil(words / wordsPerMinute);
 }
 
-export function getAllPosts(): PostMeta[] {
+function getPostsDirectory(locale: Locale): string {
+  return path.join(postsBaseDirectory, locale);
+}
+
+export function getAllPosts(locale: Locale = defaultLocale): PostMeta[] {
+  const postsDirectory = getPostsDirectory(locale);
+
+  if (!fs.existsSync(postsDirectory)) {
+    return [];
+  }
+
   const fileNames = fs.readdirSync(postsDirectory);
 
   const posts = fileNames
@@ -56,7 +67,11 @@ export function getAllPosts(): PostMeta[] {
   );
 }
 
-export function getPostBySlug(slug: string): Post | null {
+export function getPostBySlug(
+  slug: string,
+  locale: Locale = defaultLocale
+): Post | null {
+  const postsDirectory = getPostsDirectory(locale);
   const extensions = ['.mdx', '.md'];
 
   for (const ext of extensions) {
@@ -86,7 +101,13 @@ export function getPostBySlug(slug: string): Post | null {
   return null;
 }
 
-export function getAllSlugs(): string[] {
+export function getAllSlugs(locale: Locale = defaultLocale): string[] {
+  const postsDirectory = getPostsDirectory(locale);
+
+  if (!fs.existsSync(postsDirectory)) {
+    return [];
+  }
+
   const fileNames = fs.readdirSync(postsDirectory);
   return fileNames
     .filter((name) => name.endsWith('.mdx') || name.endsWith('.md'))
