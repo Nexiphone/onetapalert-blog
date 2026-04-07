@@ -5,13 +5,13 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin', 'latin-ext'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://blog.nexitel.us'),
+  metadataBase: new URL('https://blog.onetapalert.com'),
   title: {
-    default: 'Nexitel Blog - Prepaid Wireless Insights & Guides',
-    template: '%s | Nexitel Blog',
+    default: 'One Tap Alert Blog — Personal Safety Tips & Emergency Guides',
+    template: '%s | One Tap Alert Blog',
   },
   description:
-    'Expert guides on prepaid wireless plans, eSIM technology, international roaming, 5G coverage, and no-contract phone plans from Nexitel.',
+    'Expert guides on personal safety, emergency preparedness, campus safety, and how to stay protected with One Tap Alert — your SOS safety app.',
 };
 
 export default function RootLayout({

@@ -9,20 +9,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        nexitel: {
-          purple: '#8b5cf6',
-          blue: '#3b82f6',
-          dark: '#1a1145',
-          darker: '#0f0a2e',
-          light: '#f0ecff',
+        ota: {
+          green: '#4A7C59',
+          'green-dark': '#2D5A3D',
+          'green-light': '#E8F5E9',
+          warm: '#A53D2C',
+          beige: '#FFF8F0',
+          'beige-dark': '#F5E6D3',
+          cream: '#FFFAF5',
+          coral: '#FC9999',
+          dark: '#1A2E1A',
+          text: '#2D3436',
         },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'nexitel-gradient': 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
-        'nexitel-gradient-dark': 'linear-gradient(135deg, #1a1145, #0f0a2e)',
+        'ota-gradient': 'linear-gradient(135deg, #4A7C59, #2D5A3D)',
+        'ota-gradient-warm': 'linear-gradient(135deg, #A53D2C, #4A7C59)',
       },
     },
   },

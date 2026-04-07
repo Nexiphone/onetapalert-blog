@@ -1,5 +1,5 @@
 {
-  "name": "nexitel-blog",
+  "name": "onetapalert-blog",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -13,7 +13,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "gray-matter": "^4.0.3",
-    "next-mdx-remote": "^6.0.0",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1"
   },

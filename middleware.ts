@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const locales = ['en', 'zh', 'es'];
+const locales = ['en', 'es', 'zh', 'tl', 'vi', 'ko', 'hi', 'bn', 'ur', 'ar', 'so', 'ru', 'pl', 'fr', 'pt', 'de', 'ja', 'he'];
 const defaultLocale = 'en';
 
 function getPreferredLocale(request: NextRequest): string {
   const acceptLanguage = request.headers.get('accept-language');
   if (!acceptLanguage) return defaultLocale;
 
-  // Parse Accept-Language header and find best match
   const languages = acceptLanguage
     .split(',')
     .map((lang) => {
@@ -21,12 +20,10 @@ function getPreferredLocale(request: NextRequest): string {
     .sort((a, b) => b.quality - a.quality);
 
   for (const { code } of languages) {
-    // Check exact match first (e.g., "zh-CN" -> "zh")
     const primary = code.split('-')[0];
     if (locales.includes(primary)) {
       return primary;
     }
-    // Check full code match
     if (locales.includes(code)) {
       return code;
     }
@@ -38,7 +35,6 @@ function getPreferredLocale(request: NextRequest): string {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if the pathname already starts with a locale
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
@@ -47,23 +43,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip internal Next.js paths, API routes, and static files
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/favicon') ||
-    pathname.includes('.') // static files like .css, .js, .png, etc.
+    pathname.includes('.')
   ) {
     return NextResponse.next();
   }
 
-  // Redirect to the preferred locale
   const locale = getPreferredLocale(request);
   const newUrl = new URL(`/${locale}${pathname}`, request.url);
   return NextResponse.redirect(newUrl);
 }
 
 export const config = {
-  // Match all paths except static files and api routes
   matcher: ['/((?!_next|api|favicon\\.ico|.*\\..*).*)'],
 };

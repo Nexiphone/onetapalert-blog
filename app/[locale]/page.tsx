@@ -7,6 +7,7 @@ import {
   getTranslations,
   localeDateFormats,
 } from '@/lib/i18n';
+import { isRtl } from '@/lib/rtl';
 
 interface Props {
   params: { locale: string };
@@ -21,31 +22,33 @@ export default function LocaleHomePage({ params }: Props) {
   const t = getTranslations(locale);
   const posts = getAllPosts(locale);
   const dateLocale = localeDateFormats[locale];
+  const rtl = isRtl(locale);
 
   return (
     <>
       {/* Hero Section */}
-      <section className="bg-nexitel-dark relative overflow-hidden">
-        <div className="absolute inset-0 bg-nexitel-gradient opacity-10" />
+      <section className="bg-ota-dark relative overflow-hidden">
+        <div className="absolute inset-0 bg-ota-gradient opacity-10" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4">
-            <span className="gradient-text">{t.nav.nexitelBlog}</span>
+            <span className="text-2xl sm:text-3xl block mb-2">🔔</span>
+            <span className="gradient-text">{t.nav.oneTapAlertBlog}</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
             {t.blog.heroSubtitle}
           </p>
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-8 flex justify-center gap-4 flex-wrap">
             <a
-              href="https://nexitel.us/blue-plans"
-              className="bg-nexitel-gradient text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+              href="https://apps.apple.com/us/app/one-tap-alert/id6758563344"
+              className="bg-ota-gradient text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
               target="_blank"
               rel="noopener noreferrer"
             >
-              {t.blog.explorePlans}
+              {t.blog.downloadApp}
             </a>
             <a
               href="#posts"
-              className="border border-purple-500/50 text-gray-300 hover:text-white font-semibold px-6 py-3 rounded-lg hover:border-purple-400 transition-colors"
+              className="border border-green-500/50 text-gray-300 hover:text-white font-semibold px-6 py-3 rounded-lg hover:border-green-400 transition-colors"
             >
               {t.blog.readArticles}
             </a>
@@ -68,10 +71,10 @@ export default function LocaleHomePage({ params }: Props) {
             <Link
               key={post.slug}
               href={`/${locale}/blog/${post.slug}`}
-              className="group block bg-white rounded-xl border border-gray-200 hover:border-nexitel-purple/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden"
+              className="group block bg-white rounded-xl border border-gray-200 hover:border-ota-green/50 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 overflow-hidden"
             >
               {/* Card Image */}
-              <div className="h-48 bg-nexitel-gradient-dark relative overflow-hidden">
+              <div className="h-48 bg-ota-gradient relative overflow-hidden">
                 {post.image && post.image.startsWith('/') ? (
                   <img
                     src={post.image}
@@ -81,17 +84,17 @@ export default function LocaleHomePage({ params }: Props) {
                   />
                 ) : (
                   <>
-                    <div className="absolute inset-0 bg-nexitel-gradient opacity-20 group-hover:opacity-30 transition-opacity" />
+                    <div className="absolute inset-0 bg-ota-gradient opacity-80" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-4xl opacity-50">
-                        {post.category === 'Plans' ? '📱' : post.category === 'Technology' ? '⚡' : post.category === 'Travel' ? '🌍' : post.category === 'Guide' ? '📖' : '📡'}
+                      <span className="text-4xl opacity-70">
+                        {post.category === 'City Safety' ? '🏙️' : post.category === 'Student Safety' ? '🎓' : post.category === 'Elderly Safety' ? '👴' : post.category === 'Emergency Preparedness' ? '🚨' : post.category === 'App Features' ? '📱' : '🛡️'}
                       </span>
                     </div>
                   </>
                 )}
                 {/* Category Badge */}
-                <div className="absolute top-4 left-4">
-                  <span className="bg-nexitel-purple/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                <div className={`absolute top-4 ${rtl ? 'right-4' : 'left-4'}`}>
+                  <span className="bg-ota-green/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
                     {post.category}
                   </span>
                 </div>
@@ -112,16 +115,16 @@ export default function LocaleHomePage({ params }: Props) {
                     {post.readingTime} {t.blog.minRead}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-nexitel-purple transition-colors mb-2 line-clamp-2">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-ota-green transition-colors mb-2 line-clamp-2">
                   {post.title}
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
                   {post.description}
                 </p>
-                <div className="mt-4 flex items-center text-nexitel-purple text-sm font-medium">
+                <div className={`mt-4 flex items-center text-ota-green text-sm font-medium ${rtl ? 'flex-row-reverse' : ''}`}>
                   {t.blog.readMore}
                   <svg
-                    className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform"
+                    className={`w-4 h-4 group-hover:translate-x-1 transition-transform ${rtl ? 'mr-1 rotate-180' : 'ml-1'}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -141,19 +144,19 @@ export default function LocaleHomePage({ params }: Props) {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-nexitel-dark">
+      <section className="bg-ota-dark">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             {t.cta.title}
           </h2>
           <p className="text-gray-300 mb-8 text-lg">{t.cta.description}</p>
           <a
-            href="https://nexitel.us/blue-plans"
-            className="inline-block bg-nexitel-gradient text-white font-semibold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg"
+            href="https://apps.apple.com/us/app/one-tap-alert/id6758563344"
+            className="inline-block bg-ota-gradient text-white font-semibold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg"
             target="_blank"
             rel="noopener noreferrer"
           >
-            {t.cta.browseAllPlans}
+            {t.cta.downloadNow}
           </a>
         </div>
       </section>

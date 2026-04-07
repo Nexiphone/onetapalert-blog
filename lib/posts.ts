@@ -56,7 +56,7 @@ export function getAllPosts(locale: Locale = defaultLocale): PostMeta[] {
         description: data.description || '',
         date: data.date || '',
         category: data.category || 'General',
-        author: data.author || 'Nexitel Team',
+        author: data.author || 'One Tap Alert Team',
         image: data.image || '',
         readingTime: calculateReadingTime(content),
       };
@@ -89,7 +89,7 @@ export function getPostBySlug(
         description: data.description || '',
         date: data.date || '',
         category: data.category || 'General',
-        author: data.author || 'Nexitel Team',
+        author: data.author || 'One Tap Alert Team',
         image: data.image || '',
         readingTime: calculateReadingTime(content),
         contentHtml,
