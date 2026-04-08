@@ -104,7 +104,7 @@ export default function LocaleLayout({ children, params }: Props) {
                 href={`/${locale}`}
                 className="flex items-center space-x-2"
               >
-                <span className="text-2xl">🔔</span>
+                <img src="/logo.png" alt="One Tap Alert" className="w-8 h-8 rounded-lg" />
                 <span className="text-lg font-bold text-white hidden sm:inline">
                   One Tap <span className="text-ota-green">Alert</span>
                 </span>
@@ -167,7 +167,7 @@ export default function LocaleLayout({ children, params }: Props) {
             {/* Brand */}
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-3">
-                <span className="text-2xl">🔔</span>
+                <img src="/logo.png" alt="One Tap Alert" className="w-10 h-10 rounded-lg" />
                 <span className="text-xl font-bold text-white">
                   One Tap <span className="text-ota-green">Alert</span>
                 </span>

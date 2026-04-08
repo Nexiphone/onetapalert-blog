@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   },
   description:
     'Expert guides on personal safety, emergency preparedness, campus safety, and how to stay protected with One Tap Alert — your SOS safety app.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({

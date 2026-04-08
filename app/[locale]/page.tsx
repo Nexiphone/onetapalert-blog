@@ -31,7 +31,7 @@ export default function LocaleHomePage({ params }: Props) {
         <div className="absolute inset-0 bg-ota-gradient opacity-10" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4">
-            <span className="text-2xl sm:text-3xl block mb-2">🔔</span>
+            <img src="/logo.png" alt="One Tap Alert" className="w-16 h-16 rounded-2xl mx-auto mb-2" />
             <span className="gradient-text">{t.nav.oneTapAlertBlog}</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
