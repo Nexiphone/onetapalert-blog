@@ -1,0 +1,224 @@
+#!/usr/bin/env node
+/**
+ * Generate a new blog post using the Anthropic API.
+ * Writes English post + Chinese/Spanish translations, and downloads a stock image.
+ */
+
+import Anthropic from '@anthropic-ai/sdk';
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const POSTS_DIR = path.join(process.cwd(), 'posts');
+const IMAGES_DIR = path.join(process.cwd(), 'public', 'images', 'blog');
+
+// List of topic categories to rotate through
+const TOPIC_CATEGORIES = [
+  { category: 'City Safety', topics: ['parking lot safety', 'public transit safety', 'bar and nightlife safety', 'festival safety', 'neighborhood safety', 'urban biking safety'] },
+  { category: 'Student Safety', topics: ['dorm safety', 'study group safety', 'campus parking safety', 'spring break safety'] },
+  { category: 'Travel Safety', topics: ['airport safety', 'road trip safety', 'hiking safety', 'beach safety', 'cruise ship safety', 'backpacking safety'] },
+  { category: 'Emergency Preparedness', topics: ['first aid basics', 'power outage preparedness', 'home fire safety', 'earthquake readiness', 'tornado safety', 'flood preparedness'] },
+  { category: 'Digital Safety', topics: ['online dating safety', 'social media privacy', 'phone security', 'identity theft prevention'] },
+  { category: 'Family Safety', topics: ['child safety tips', 'teen safety guide', 'pet owner safety', 'babysitter safety guide', 'newborn home safety'] },
+  { category: 'Workplace Safety', topics: ['commute safety', 'late shift worker safety', 'remote worker safety', 'business travel safety'] },
+];
+
+function getExistingSlugs() {
+  const enDir = path.join(POSTS_DIR, 'en');
+  if (!fs.existsSync(enDir)) return [];
+  return fs.readdirSync(enDir)
+    .filter(f => f.endsWith('.mdx'))
+    .map(f => f.replace('.mdx', ''));
+}
+
+function pickTopic(existingSlugs) {
+  const shuffled = [...TOPIC_CATEGORIES].sort(() => Math.random() - 0.5);
+  for (const cat of shuffled) {
+    const shuffledTopics = [...cat.topics].sort(() => Math.random() - 0.5);
+    for (const topic of shuffledTopics) {
+      const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (!existingSlugs.includes(slug) && !existingSlugs.some(s => s.includes(slug.split('-')[0]))) {
+        return { category: cat.category, topic, slug };
+      }
+    }
+  }
+  // Fallback: timestamped
+  return {
+    category: 'City Safety',
+    topic: `safety tips for ${new Date().toLocaleDateString('en-US', { weekday: 'long' })}s`,
+    slug: `safety-tips-${Date.now()}`,
+  };
+}
+
+async function downloadImage(slug) {
+  // Use Unsplash Source API (redirects to a relevant random photo)
+  const unsplashTopicMap = {
+    'parking-lot-safety': 'photo-1506521781263-d8422e82f27a',
+    'public-transit-safety': 'photo-1515767094208-cf67b81d1be5',
+    'bar-and-nightlife-safety': 'photo-1514933651103-005eec06c04b',
+    'festival-safety': 'photo-1533174072545-7a4b6ad7a6c3',
+    'hiking-safety': 'photo-1551632811-561732d1e306',
+    'beach-safety': 'photo-1507525428034-b723cf961d3e',
+    'airport-safety': 'photo-1436491865332-7a61a109cc05',
+    'road-trip-safety': 'photo-1469854523086-cc02fe5d8800',
+    'first-aid-basics': 'photo-1584515933487-779824d29309',
+    'home-fire-safety': 'photo-1582485199248-e34d3e37b7ad',
+    'online-dating-safety': 'photo-1516321318423-f06f85e504b3',
+    'child-safety-tips': 'photo-1607582544393-8a0c0e76b4e7',
+    'pet-owner-safety': 'photo-1552053831-71594a27632d',
+    'commute-safety': 'photo-1449965408869-ebd13bc9e5a8',
+  };
+
+  // Default to a generic safety image if no mapping
+  const photoId = unsplashTopicMap[slug] || 'photo-1519608487953-e999c86e7455';
+  const url = `https://images.unsplash.com/${photoId}?w=1200&h=630&fit=crop&q=80`;
+
+  const filepath = path.join(IMAGES_DIR, `${slug}.jpg`);
+
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(filepath);
+    https.get(url, (response) => {
+      if (response.statusCode === 200) {
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          const stats = fs.statSync(filepath);
+          if (stats.size < 1000) {
+            reject(new Error('Image too small'));
+          } else {
+            resolve(filepath);
+          }
+        });
+      } else {
+        file.close();
+        fs.unlinkSync(filepath);
+        reject(new Error(`HTTP ${response.statusCode}`));
+      }
+    }).on('error', (err) => {
+      file.close();
+      try { fs.unlinkSync(filepath); } catch {}
+      reject(err);
+    });
+  });
+}
+
+async function generateEnglishPost(topic, category, slug) {
+  const today = new Date().toISOString().split('T')[0];
+
+  const prompt = `Write an SEO-optimized blog post for the One Tap Alert personal safety app blog.
+
+One Tap Alert is an SOS emergency safety app: press-and-hold to alert emergency contacts with live location. Features: instant SOS button, real-time location sharing, safety timer, secure vault, unlimited contacts. iOS app, free download, $5.99/month or $24.99/year. App Store: https://apps.apple.com/us/app/one-tap-alert/id6758563344
+
+TOPIC: ${topic}
+CATEGORY: ${category}
+
+Requirements:
+- 1200-1800 words
+- SEO-optimized title and 150-160 char description
+- Proper H2 (##) and H3 (###) heading structure
+- Naturally mention "One Tap Alert" 2-3 times
+- End with a CTA section to download the app
+- Practical, actionable advice
+
+Output ONLY the complete .mdx file content including the YAML frontmatter. Use this exact format:
+
+---
+title: "..."
+description: "..."
+date: "${today}"
+category: "${category}"
+author: "One Tap Alert Team"
+image: "/images/blog/${slug}.jpg"
+---
+
+[blog post content in markdown here]`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 8000,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  return response.content[0].text.trim();
+}
+
+async function translatePost(englishContent, targetLang) {
+  const langName = targetLang === 'zh' ? 'Simplified Chinese' : 'Spanish';
+
+  const prompt = `Translate this blog post to ${langName}. Keep the YAML frontmatter format but translate the title and description. Keep category, author, date, and image values UNCHANGED. Keep "One Tap Alert" as brand name. Keep all markdown formatting.
+
+Output ONLY the translated .mdx file content, nothing else.
+
+---
+
+${englishContent}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 8000,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  return response.content[0].text.trim();
+}
+
+async function main() {
+  console.log('🚀 Starting daily blog post generation...');
+
+  const existingSlugs = getExistingSlugs();
+  console.log(`Found ${existingSlugs.length} existing posts`);
+
+  const { category, topic, slug } = pickTopic(existingSlugs);
+  console.log(`📝 Topic: ${topic} (${category}) → slug: ${slug}`);
+
+  // Ensure directories exist
+  ['en', 'zh', 'es'].forEach(lang => {
+    const dir = path.join(POSTS_DIR, lang);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  });
+  if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+
+  // Download image
+  try {
+    console.log('🖼️  Downloading image...');
+    await downloadImage(slug);
+    console.log('✅ Image downloaded');
+  } catch (e) {
+    console.warn('⚠️  Image download failed:', e.message);
+  }
+
+  // Generate English post
+  console.log('✍️  Writing English post...');
+  const englishContent = await generateEnglishPost(topic, category, slug);
+  fs.writeFileSync(path.join(POSTS_DIR, 'en', `${slug}.mdx`), englishContent);
+  console.log('✅ English post written');
+
+  // Translate to Chinese
+  console.log('🇨🇳 Translating to Chinese...');
+  const chineseContent = await translatePost(englishContent, 'zh');
+  fs.writeFileSync(path.join(POSTS_DIR, 'zh', `${slug}.mdx`), chineseContent);
+  console.log('✅ Chinese translation written');
+
+  // Translate to Spanish
+  console.log('🇪🇸 Translating to Spanish...');
+  const spanishContent = await translatePost(englishContent, 'es');
+  fs.writeFileSync(path.join(POSTS_DIR, 'es', `${slug}.mdx`), spanishContent);
+  console.log('✅ Spanish translation written');
+
+  console.log('🎉 Done! New post created:', slug);
+
+  // Output for GitHub Actions
+  if (process.env.GITHUB_OUTPUT) {
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `slug=${slug}\n`);
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `topic=${topic}\n`);
+  }
+}
+
+main().catch(err => {
+  console.error('❌ Error:', err);
+  process.exit(1);
+});

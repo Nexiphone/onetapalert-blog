@@ -1,0 +1,43 @@
+name: Daily Blog Post
+
+on:
+  schedule:
+    # Runs every day at 13:00 UTC (9:00 AM EDT / 8:00 AM EST)
+    - cron: '0 13 * * *'
+  workflow_dispatch: # Allow manual trigger from Actions tab
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Anthropic SDK
+        run: npm install --no-save @anthropic-ai/sdk@0.32.1
+
+      - name: Generate new blog post
+        id: generate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/generate-blog-post.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add daily post: ${{ steps.generate.outputs.topic }}"
+            git push
+          fi
