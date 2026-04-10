@@ -111,7 +111,17 @@ async function generateEnglishPost(topic, category, slug) {
 
   const prompt = `Write an SEO-optimized blog post for the One Tap Alert personal safety app blog.
 
-One Tap Alert is an SOS emergency safety app: press-and-hold to alert emergency contacts with live location. Features: instant SOS button, real-time location sharing, safety timer, secure vault, unlimited contacts. iOS app, free download, $5.99/month or $24.99/year. App Store: https://apps.apple.com/us/app/one-tap-alert/id6758563344
+ABOUT ONE TAP ALERT:
+One Tap Alert is an SOS emergency safety app for iOS. Key features:
+- **Instant SOS Button** — Press and hold for 1 second to alert all emergency contacts with live location
+- **Real-Time Location Sharing** — Emergency contacts see exactly where you are via live GPS tracking
+- **Safety Timer** — Set a countdown for activities (walks, dates, runs); if you don't check in, contacts are auto-alerted
+- **Secure Vault** — End-to-end encrypted storage for sensitive documents (ID, insurance, medical info)
+- **Unlimited Emergency Contacts** — Add as many trusted people as you want
+- **Privacy First** — No background tracking, no location history stored, no data selling
+- Free to download, premium features $5.99/month or $24.99/year
+- App Store: https://apps.apple.com/us/app/one-tap-alert/id6758563344
+- Website: https://onetapalert.com
 
 TOPIC: ${topic}
 CATEGORY: ${category}
@@ -120,9 +130,16 @@ Requirements:
 - 1200-1800 words
 - SEO-optimized title and 150-160 char description
 - Proper H2 (##) and H3 (###) heading structure
-- Naturally mention "One Tap Alert" 2-3 times
-- End with a CTA section to download the app
-- Practical, actionable advice
+- **MUST mention "One Tap Alert" throughout the article** — at least 4-5 times naturally woven into the content
+- **MUST have a dedicated H2 section titled "How One Tap Alert Helps With [topic]"** explaining how specific features (SOS button, safety timer, location sharing) apply to this scenario
+- **MUST include specific feature mentions** — don't just name the brand, reference the actual features (SOS button, safety timer, live location sharing) in context
+- Every section should tie back to how the reader can use One Tap Alert to apply the advice
+- End with a strong CTA section titled "Download One Tap Alert Today" that includes:
+  - The App Store link: https://apps.apple.com/us/app/one-tap-alert/id6758563344
+  - Mention it's free to download
+  - Mention premium pricing ($5.99/mo or $24.99/yr)
+- Practical, actionable advice the reader can apply immediately
+- Position One Tap Alert as the natural solution throughout — this is a product blog, so every post should drive app awareness
 
 Output ONLY the complete .mdx file content including the YAML frontmatter. Use this exact format:
 
