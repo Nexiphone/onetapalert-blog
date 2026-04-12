@@ -160,7 +160,12 @@ image: "/images/blog/${slug}.jpg"
     messages: [{ role: 'user', content: prompt }],
   });
 
-  return response.content[0].text.trim();
+  return stripCodeFences(response.content[0].text.trim());
+}
+
+function stripCodeFences(text) {
+  // Remove ```mdx or ```markdown wrappers that AI sometimes adds
+  return text.replace(/^```\w*\n/, '').replace(/\n```\s*$/, '').trim();
 }
 
 async function translatePost(englishContent, targetLang) {
@@ -180,7 +185,7 @@ ${englishContent}`;
     messages: [{ role: 'user', content: prompt }],
   });
 
-  return response.content[0].text.trim();
+  return stripCodeFences(response.content[0].text.trim());
 }
 
 async function main() {

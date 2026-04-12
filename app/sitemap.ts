@@ -15,9 +15,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     const posts = getAllPosts(locale as Locale);
     for (const post of posts) {
+      const postDate = new Date(post.date);
       entries.push({
         url: `https://blog.onetapalert.com/${locale}/blog/${post.slug}`,
-        lastModified: new Date(post.date),
+        lastModified: isNaN(postDate.getTime()) ? new Date() : postDate,
         changeFrequency: 'monthly',
         priority: 0.8,
       });
