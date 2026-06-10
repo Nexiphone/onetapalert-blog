@@ -31,16 +31,25 @@ const fontsDir = path.join(root, "scripts", "assets", "fonts");
 const historyPath = path.join(root, "content", "poster-history.json");
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
-if (!apiKey) {
-  console.error("ANTHROPIC_API_KEY is not set. Add it as a GitHub Actions secret.");
-  process.exit(1);
-}
 const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
+
+// Stub content for `--mock` local render tests (no Claude call needed).
+const MOCK_CONTENT = {
+  category: "Safety Tip",
+  headline: "Share Your Location Tonight",
+  tip: "Heading out after dark? Share live location with someone you trust before you leave — peace of mind in one tap.",
+  imageQuery: "city street night",
+  caption:
+    "Heading out tonight? A little planning goes a long way. Share your live location and set a Safety Timer so someone always has your back.",
+  hashtags: ["#OneTapAlert", "#PersonalSafety", "#StaySafe", "#SafetyTips", "#USA"],
+};
 const graphVersion = process.env.META_GRAPH_VERSION || "v21.0";
 const dryRun = process.argv.includes("--dry-run");
+const mock = process.argv.includes("--mock"); // local render test: skip the Claude call
 
-// Where the poster's QR code + caption link point (App Store listing).
-const DOWNLOAD_URL = "https://apps.apple.com/us/app/one-tap-alert/id6758563344";
+// Where the poster's QR codes + caption links point (both app stores).
+const APP_STORE_URL = "https://apps.apple.com/us/app/one-tap-alert/id6758563344";
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.despia.onetapalert";
 
 // Rotating safety pillars so daily tips stay varied across the app's themes.
 const PILLARS = [
@@ -86,6 +95,7 @@ async function loadHistory() {
 }
 
 async function writeContent(history) {
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set. Add it as a GitHub Actions secret.");
   const recent = history.slice(-40).map((h) => `- ${h.headline}`).join("\n") || "- (none yet)";
   const pillar = PILLARS[history.length % PILLARS.length];
   // Localize roughly half the posters to a US city for American local discovery.
@@ -93,7 +103,7 @@ async function writeContent(history) {
 
   const system =
     "You write punchy, reassuring social media graphics for One Tap Alert (onetapalert.com) - a " +
-    "personal-safety SOS app for iPhone. It offers a one-tap SOS button that alerts your emergency " +
+    "personal-safety SOS app for iPhone and Android. It offers a one-tap SOS button that alerts your emergency " +
     "contacts with your live location, real-time location sharing, a Safety Timer (set a countdown " +
     "for an activity; if you don't check in, contacts are auto-alerted), an encrypted vault, and " +
     "unlimited emergency contacts. Tone is calm, empowering and genuinely useful - never " +
@@ -145,6 +155,17 @@ function box(style, children) {
   return { type: "div", props: { style: { display: "flex", ...style }, children } };
 }
 
+// A single white QR card with a store label underneath.
+function qrCard(dataUri, label) {
+  return box({ flexDirection: "column", alignItems: "center" }, [
+    box({ backgroundColor: "#ffffff", padding: 12, borderRadius: 18 }, [
+      { type: "img", props: { src: dataUri, width: 150, height: 150 } },
+    ]),
+    box({ height: 8 }, []),
+    box({ fontSize: 23, fontWeight: 600, color: "rgba(255,255,255,0.85)" }, label),
+  ]);
+}
+
 // One Tap Alert brand palette (from the blog's tailwind theme).
 const INK = "#1A2E1A"; // deep green-black panel (ota.dark)
 const GREEN = "#4A7C59"; // primary brand green
@@ -180,7 +201,7 @@ async function fetchPhotoDataUri(query, variety) {
   }
 }
 
-async function renderPoster({ category, headline, tip, photoDataUri, qrDataUri }) {
+async function renderPoster({ category, headline, tip, photoDataUri, appleQr, androidQr }) {
   const [bold, semi, regular] = await Promise.all([
     readFile(path.join(fontsDir, "Poppins-Bold.ttf")),
     readFile(path.join(fontsDir, "Poppins-SemiBold.ttf")),
@@ -192,15 +213,12 @@ async function renderPoster({ category, headline, tip, photoDataUri, qrDataUri }
     ? { type: "img", props: { src: photoDataUri, width: 1080, height: PHOTO_H, style: { objectFit: "cover" } } }
     : box({ width: 1080, height: PHOTO_H, backgroundImage: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DEEP} 100%)` }, []);
 
-  const qrCard = qrDataUri
-    ? box({ flexDirection: "column", alignItems: "center" }, [
-        box({ backgroundColor: "#ffffff", padding: 16, borderRadius: 24 }, [
-          { type: "img", props: { src: qrDataUri, width: 200, height: 200 } },
-        ]),
-        box({ height: 12 }, []),
-        box({ fontSize: 26, fontWeight: 600, color: "rgba(255,255,255,0.8)" }, "Scan to install"),
-      ])
-    : box({}, []);
+  // Two QR codes side by side: Apple App Store + Google Play.
+  const qrRow = box({ flexDirection: "row", alignItems: "flex-end" }, [
+    qrCard(appleQr, "App Store"),
+    box({ width: 22 }, []),
+    qrCard(androidQr, "Google Play"),
+  ]);
 
   const tree = box(
     { width: 1080, height: 1350, flexDirection: "column", backgroundColor: INK, fontFamily: "Poppins", color: "white" },
@@ -223,27 +241,27 @@ async function renderPoster({ category, headline, tip, photoDataUri, qrDataUri }
           box({ height: 20 }, []),
           box({ fontSize: 36, fontWeight: 400, lineHeight: 1.38, color: "rgba(255,255,255,0.86)" }, tip),
         ]),
-        // call-to-action row: download text (left) + QR card (right)
+        // call-to-action row: download text (left) + two QR cards (right)
         box({ alignItems: "flex-end", justifyContent: "space-between" }, [
           box({ flexDirection: "column" }, [
             box({ alignItems: "center" }, [
               box(
-                { backgroundColor: GREEN, color: "#ffffff", fontWeight: 700, fontSize: 32, letterSpacing: 1, padding: "20px 40px", borderRadius: 999 },
+                { backgroundColor: GREEN, color: "#ffffff", fontWeight: 700, fontSize: 30, letterSpacing: 1, padding: "18px 36px", borderRadius: 999 },
                 "DOWNLOAD FREE",
               ),
             ]),
-            box({ height: 18 }, []),
-            box({ fontSize: 30, fontWeight: 600, color: "rgba(255,255,255,0.78)" }, "On the App Store"),
-            box({ height: 18 }, []),
-            box({ fontSize: 36, fontWeight: 600, color: "#cfe8d6" }, "Safety in one tap"),
-            box({ height: 26 }, []),
+            box({ height: 16 }, []),
+            box({ fontSize: 30, fontWeight: 600, color: "#cfe8d6" }, "iOS & Android"),
+            box({ height: 16 }, []),
+            box({ fontSize: 34, fontWeight: 600, color: "rgba(255,255,255,0.9)" }, "Safety in one tap"),
+            box({ height: 22 }, []),
             box({ alignItems: "center" }, [
-              box({ fontSize: 40, fontWeight: 700, color: GREEN }, "One Tap Alert"),
-              box({ width: 16 }, []),
-              box({ fontSize: 28, fontWeight: 600, color: "rgba(255,255,255,0.6)" }, "·  onetapalert.com"),
+              box({ fontSize: 36, fontWeight: 700, color: GREEN }, "One Tap Alert"),
+              box({ width: 14 }, []),
+              box({ fontSize: 24, fontWeight: 600, color: "rgba(255,255,255,0.6)" }, "·  onetapalert.com"),
             ]),
           ]),
-          qrCard,
+          qrRow,
         ]),
       ]),
     ],
@@ -327,27 +345,25 @@ async function postToInstagram(token, igUserId, imageUrl, caption) {
 
 async function main() {
   const history = await loadHistory();
-  const content = await writeContent(history);
+  const content = mock ? MOCK_CONTENT : await writeContent(history);
   console.log(`\nPoster: [${content.category}] "${content.headline}"`);
   console.log(`Tip:    ${content.tip}`);
 
   const photoQuery = content.imageQuery || content.headline;
-  const photoDataUri = await fetchPhotoDataUri(photoQuery, history.length);
+  const photoDataUri = mock ? null : await fetchPhotoDataUri(photoQuery, history.length);
   console.log(`Photo:  ${photoDataUri ? `Pexels "${photoQuery}"` : "none (gradient fallback)"}`);
 
-  const qrDataUri = await QRCode.toDataURL(DOWNLOAD_URL, {
-    margin: 1,
-    width: 260,
-    color: { dark: "#1A2E1A", light: "#ffffff" },
-  });
+  const qrOpts = { margin: 1, width: 300, color: { dark: "#1A2E1A", light: "#ffffff" } };
+  const appleQr = await QRCode.toDataURL(APP_STORE_URL, qrOpts);
+  const androidQr = await QRCode.toDataURL(PLAY_STORE_URL, qrOpts);
 
-  const png = await renderPoster({ ...content, photoDataUri, qrDataUri });
+  const png = await renderPoster({ ...content, photoDataUri, appleQr, androidQr });
   console.log(`Rendered poster PNG (${Math.round(png.length / 1024)} KB).`);
 
   const hashtags = (Array.isArray(content.hashtags) ? content.hashtags : [])
     .map((h) => (h.startsWith("#") ? h : `#${h}`))
     .slice(0, 8);
-  const caption = `${(content.caption || content.tip).trim()}\n\n📲 Download One Tap Alert free on the App Store — safety in one tap:\n${DOWNLOAD_URL}\n\n${hashtags.join(" ")}`.trim();
+  const caption = `${(content.caption || content.tip).trim()}\n\n📲 Download One Tap Alert free — safety in one tap:\n🍎 iPhone: ${APP_STORE_URL}\n🤖 Android: ${PLAY_STORE_URL}\n\n${hashtags.join(" ")}`.trim();
   console.log(`\n--- caption ---\n${caption}\n---------------\n`);
 
   if (dryRun) {
