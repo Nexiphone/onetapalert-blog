@@ -82,21 +82,59 @@ const US_CITIES = [
   "Charlotte", "Minneapolis",
 ];
 
-// Curated Unsplash photo IDs (people / city / street / travel / safety themes).
-// These are direct CDN URLs that need NO API key, so the poster ALWAYS has a real
-// photo header even when PEXELS_API_KEY isn't set. (Pexels, when keyed, is still
-// preferred because it matches each tip's imageQuery.)
-const UNSPLASH_POOL = [
-  "photo-1519608487953-e999c86e7455", "photo-1488161628813-04466f872be2",
-  "photo-1514933651103-005eec06c04b", "photo-1502920917128-1aa500764cbd",
-  "photo-1490806843957-31f4c9a91c65", "photo-1444723121867-7a241cacace9",
-  "photo-1480714378408-67cf0d13bc1b", "photo-1506521781263-d8422e82f27a",
-  "photo-1469854523086-cc02fe5d8800", "photo-1436491865332-7a61a109cc05",
-  "photo-1551632811-561732d1e306", "photo-1507525428034-b723cf961d3e",
-  "photo-1533174072545-7a4b6ad7a6c3", "photo-1516321318423-f06f85e504b3",
-  "photo-1584515933487-779824d29309", "photo-1494790108377-be9c29b29330",
-  "photo-1517841905240-472988babdf9",
+// Curated, tag-themed Unsplash photo IDs (direct CDN URLs — NO API key needed) so
+// the poster ALWAYS has a real photo header and can MATCH the photo to the tip's
+// theme. Tasteful only — for the meeting-someone/dating/late-night audiences the
+// imagery suggests "heading out to meet someone at night" (a woman alone, a city
+// street after dark, a rideshare, a night-out table) — never explicit/suggestive,
+// which would get the social accounts flagged. (Pexels, when keyed, is preferred
+// because it searches a tasteful photo matched to each tip's imageQuery.)
+const PHOTO_LIBRARY = [
+  // women / meeting someone / night out — dating, meeting strangers or clients alone
+  { id: "photo-1485178575877-1a13bf489dfe", tags: ["woman", "night", "alone", "meet", "date"] },
+  { id: "photo-1494790108377-be9c29b29330", tags: ["woman", "alone", "meet", "date"] },
+  { id: "photo-1517841905240-472988babdf9", tags: ["woman", "alone", "meet", "date"] },
+  { id: "photo-1503342217505-b0a15ec3261c", tags: ["woman", "alone", "date"] },
+  { id: "photo-1515378791036-0648a3ef77b2", tags: ["woman", "street", "walk", "alone"] },
+  { id: "photo-1414235077428-338989a2e8c0", tags: ["night", "meet", "date", "client", "dining"] },
+  { id: "photo-1514933651103-005eec06c04b", tags: ["night", "meet", "client", "bar", "street"] },
+  // city / street / walking / commuting — women alone, late shift, walking at night
+  { id: "photo-1480714378408-67cf0d13bc1b", tags: ["night", "city", "street", "commute"] },
+  { id: "photo-1488161628813-04466f872be2", tags: ["walk", "street", "alone", "night", "commute"] },
+  { id: "photo-1490806843957-31f4c9a91c65", tags: ["walk", "street", "commute"] },
+  { id: "photo-1502920917128-1aa500764cbd", tags: ["city", "street", "commute"] },
+  { id: "photo-1444723121867-7a241cacace9", tags: ["street", "city", "night"] },
+  { id: "photo-1519608487953-e999c86e7455", tags: ["city", "people", "general"] },
+  // car / rideshare — getting to or from a meetup, late-night ride
+  { id: "photo-1469854523086-cc02fe5d8800", tags: ["car", "rideshare", "road", "travel"] },
+  { id: "photo-1506521781263-d8422e82f27a", tags: ["car", "parking", "night"] },
+  // work / business — independent & client work
+  { id: "photo-1534030347209-467a5b0ad3e6", tags: ["work", "client", "business"] },
+  // travel
+  { id: "photo-1436491865332-7a61a109cc05", tags: ["airport", "travel"] },
+  { id: "photo-1551632811-561732d1e306", tags: ["hike", "trail", "travel", "outdoor"] },
+  { id: "photo-1507525428034-b723cf961d3e", tags: ["beach", "travel", "outdoor"] },
+  // older adults / living alone / check-ins
+  { id: "photo-1573497019940-1c28c88b4f3e", tags: ["older", "elder", "senior", "woman", "alone", "home", "family"] },
+  // social / digital / emergency / family
+  { id: "photo-1533174072545-7a4b6ad7a6c3", tags: ["festival", "crowd", "night"] },
+  { id: "photo-1516321318423-f06f85e504b3", tags: ["phone", "digital", "online", "date"] },
+  { id: "photo-1584515933487-779824d29309", tags: ["firstaid", "emergency", "medical"] },
 ];
+
+// Pick the photo whose tags best match the tip text; ties + no-match rotate by index.
+function pickPhotoId(content, index) {
+  const hay = `${content.imageQuery || ""} ${content.headline || ""} ${content.tip || ""}`.toLowerCase();
+  let best = -1;
+  let bestIds = [];
+  for (const p of PHOTO_LIBRARY) {
+    const score = p.tags.reduce((s, t) => s + (hay.includes(t) ? 1 : 0), 0);
+    if (score > best) { best = score; bestIds = [p.id]; }
+    else if (score === best) bestIds.push(p.id);
+  }
+  if (best <= 0) return PHOTO_LIBRARY[index % PHOTO_LIBRARY.length].id;
+  return bestIds[index % bestIds.length];
+}
 
 function extractJson(text) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -150,7 +188,7 @@ Return ONLY a JSON object with EXACTLY these fields:
   "category": "2-3 word kicker in Title Case, e.g. 'Safety Tip', 'Did You Know?', 'Stay Safe', 'Be Prepared'",
   "headline": "punchy hook, MAX 38 characters, Title Case, no period",
   "tip": "1-2 calm, useful sentences expanding the headline, MAX 170 characters",
-  "imageQuery": "2-3 word search term for a REAL photo fitting the tip, e.g. 'woman walking night', 'city street evening', 'person hiking trail', 'student campus walking'",
+  "imageQuery": "2-3 word search term for a REAL, TASTEFUL photo fitting the tip (real people/places, NEVER explicit, suggestive, or sexual). For tips about meeting someone, a date, or meeting a client alone, evoke the scene respectfully: e.g. 'woman walking night', 'city street evening', 'rideshare car night', 'restaurant table night', 'woman waiting street'. Other examples: 'person hiking trail', 'nurse night shift', 'older woman home'",
   "caption": "social caption WITHOUT hashtags and WITHOUT any URL, 2-3 reassuring sentences. Naturally work in One Tap Alert's value: personal safety made simple — a one-tap SOS, live location sharing, and a Safety Timer that watches your back. Empowering, never scary. Vary the wording each time.",
   "hashtags": ["#OneTapAlert", "#... 3-6 descriptive + brand safety tags (e.g. #PersonalSafety #SafetyFirst #StaySafe #SafetyTips #SOS #EmergencyPreparedness #SafetyApp), AND include one US-geo tag (#USA, or the city tag if a city was given above)."]
 }
@@ -233,8 +271,8 @@ async function fetchPhotoDataUri(query, variety) {
  * CDN, no API key) so the poster header is never an empty gradient. Rotates by
  * index so the photo varies day to day. Returns a base64 data URI for satori.
  */
-async function fetchUnsplashDataUri(index) {
-  const id = UNSPLASH_POOL[index % UNSPLASH_POOL.length];
+async function fetchUnsplashDataUri(content, index) {
+  const id = pickPhotoId(content, index);
   try {
     const res = await fetch(`https://images.unsplash.com/${id}?w=1080&h=520&fit=crop&q=80`);
     if (!res.ok) return null;
@@ -398,8 +436,8 @@ async function main() {
   let photoDataUri = await fetchPhotoDataUri(photoQuery, history.length); // Pexels, if keyed
   let photoSource = photoDataUri ? `Pexels "${photoQuery}"` : "";
   if (!photoDataUri) {
-    photoDataUri = await fetchUnsplashDataUri(history.length); // no-key fallback
-    photoSource = photoDataUri ? "Unsplash pool" : "";
+    photoDataUri = await fetchUnsplashDataUri(content, history.length); // no-key, theme-matched
+    photoSource = photoDataUri ? "Unsplash pool (theme-matched)" : "";
   }
   console.log(`Photo:  ${photoDataUri ? photoSource : "none (gradient fallback)"}`);
 
