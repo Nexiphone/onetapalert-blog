@@ -77,6 +77,22 @@ const US_CITIES = [
   "Charlotte", "Minneapolis",
 ];
 
+// Curated Unsplash photo IDs (people / city / street / travel / safety themes).
+// These are direct CDN URLs that need NO API key, so the poster ALWAYS has a real
+// photo header even when PEXELS_API_KEY isn't set. (Pexels, when keyed, is still
+// preferred because it matches each tip's imageQuery.)
+const UNSPLASH_POOL = [
+  "photo-1519608487953-e999c86e7455", "photo-1488161628813-04466f872be2",
+  "photo-1514933651103-005eec06c04b", "photo-1502920917128-1aa500764cbd",
+  "photo-1490806843957-31f4c9a91c65", "photo-1444723121867-7a241cacace9",
+  "photo-1480714378408-67cf0d13bc1b", "photo-1506521781263-d8422e82f27a",
+  "photo-1469854523086-cc02fe5d8800", "photo-1436491865332-7a61a109cc05",
+  "photo-1551632811-561732d1e306", "photo-1507525428034-b723cf961d3e",
+  "photo-1533174072545-7a4b6ad7a6c3", "photo-1516321318423-f06f85e504b3",
+  "photo-1584515933487-779824d29309", "photo-1494790108377-be9c29b29330",
+  "photo-1517841905240-472988babdf9",
+];
+
 function extractJson(text) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   const candidate = fenced ? fenced[1] : text;
@@ -195,6 +211,24 @@ async function fetchPhotoDataUri(query, variety) {
     if (!imgRes.ok) return null;
     const buf = Buffer.from(await imgRes.arrayBuffer());
     const ct = imgRes.headers.get("content-type") || "image/jpeg";
+    return `data:${ct};base64,${buf.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * No-key photo fallback: pull a real photo from the curated Unsplash pool (direct
+ * CDN, no API key) so the poster header is never an empty gradient. Rotates by
+ * index so the photo varies day to day. Returns a base64 data URI for satori.
+ */
+async function fetchUnsplashDataUri(index) {
+  const id = UNSPLASH_POOL[index % UNSPLASH_POOL.length];
+  try {
+    const res = await fetch(`https://images.unsplash.com/${id}?w=1080&h=520&fit=crop&q=80`);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    const ct = res.headers.get("content-type") || "image/jpeg";
     return `data:${ct};base64,${buf.toString("base64")}`;
   } catch {
     return null;
@@ -350,8 +384,13 @@ async function main() {
   console.log(`Tip:    ${content.tip}`);
 
   const photoQuery = content.imageQuery || content.headline;
-  const photoDataUri = mock ? null : await fetchPhotoDataUri(photoQuery, history.length);
-  console.log(`Photo:  ${photoDataUri ? `Pexels "${photoQuery}"` : "none (gradient fallback)"}`);
+  let photoDataUri = await fetchPhotoDataUri(photoQuery, history.length); // Pexels, if keyed
+  let photoSource = photoDataUri ? `Pexels "${photoQuery}"` : "";
+  if (!photoDataUri) {
+    photoDataUri = await fetchUnsplashDataUri(history.length); // no-key fallback
+    photoSource = photoDataUri ? "Unsplash pool" : "";
+  }
+  console.log(`Photo:  ${photoDataUri ? photoSource : "none (gradient fallback)"}`);
 
   const qrOpts = { margin: 1, width: 300, color: { dark: "#1A2E1A", light: "#ffffff" } };
   const appleQr = await QRCode.toDataURL(APP_STORE_URL, qrOpts);
