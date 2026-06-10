@@ -1,0 +1,46 @@
+name: Daily social post
+
+on:
+  schedule:
+    # 13:45 UTC daily — 45 min after the daily blog job (13:00 UTC) so today's post exists.
+    - cron: "45 13 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Write the caption but do not post"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-social
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Post the newest article to social media
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          SITE_BASE: https://blog.onetapalert.com
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm run social:post -- --dry-run
+          else
+            npm run social:post
+          fi
