@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     icon: '/logo.png',
     apple: '/logo.png',
   },
+  verification: {
+    google: '8NoElrRwVcTZWyoNC2tibt__sO-45gFnW0fpCubhew8',
+  },
 };
 
 export default function RootLayout({
