@@ -51,22 +51,27 @@ const mock = process.argv.includes("--mock"); // local render test: skip the Cla
 const APP_STORE_URL = "https://apps.apple.com/us/app/one-tap-alert/id6758563344";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.despia.onetapalert";
 
-// Rotating safety pillars so daily tips stay varied across the app's themes.
+// Rotating safety pillars, weighted toward the people One Tap Alert most serves:
+// women alone, night/shift workers, online daters & anyone meeting strangers,
+// independent workers who meet clients alone, older adults & people living alone,
+// and anyone going through a lonely/low stretch who wants someone checking in.
 const PILLARS = [
-  "a quick personal-safety tip for walking alone at night",
-  "how a Safety Timer keeps you safe on a run, walk, or date",
-  "why everyone should set up emergency contacts today",
-  "staying safe in a rideshare or taxi",
-  "a simple travel-safety habit that takes 10 seconds",
-  "how live location sharing helps in an emergency",
-  "campus and dorm safety for students",
-  "keeping seniors safe and connected at home",
-  "what to do if you feel unsafe in public",
-  "building a 3-step emergency plan with your family",
-  "digital privacy and avoiding common scams",
-  "why a one-tap SOS beats fumbling for your phone",
-  "safety tips for late-shift and gig workers",
-  "preparing for a power outage or natural disaster",
+  "a personal-safety tip for women walking or commuting alone",
+  "staying safe on a late shift and the walk to your car at night",
+  "how a Safety Timer protects you on a first date or meeting someone from an app",
+  "smart safety steps and red flags when meeting a stranger in person",
+  "staying safe when you meet clients or strangers alone for work",
+  "how independent workers can quietly share live location on the job",
+  "safety and daily check-ins for an older parent living alone",
+  "staying safe and connected when you live by yourself",
+  "a gentle check-in habit for someone going through a lonely, hard time",
+  "how emergency contacts and check-ins help when you feel low or isolated",
+  "discreet ways to call for help without alerting someone nearby",
+  "setting up a trusted circle who always know where you are",
+  "why a one-tap SOS beats fumbling for your phone in a scary moment",
+  "a 10-second safety habit before you head out alone tonight",
+  "safety for night-shift and healthcare workers heading home late",
+  "building a simple safety plan if you often feel unsafe",
 ];
 
 // US metros to localize roughly half the posters for American local discovery.
@@ -123,8 +128,14 @@ async function writeContent(history) {
     "contacts with your live location, real-time location sharing, a Safety Timer (set a countdown " +
     "for an activity; if you don't check in, contacts are auto-alerted), an encrypted vault, and " +
     "unlimited emergency contacts. Tone is calm, empowering and genuinely useful - never " +
-    "fear-mongering. Write for a UNITED STATES audience: American English spelling and idioms, US " +
-    "references, dollars ($). You ALWAYS respond with a single valid JSON object and nothing else.";
+    "fear-mongering. It especially speaks to the people most at risk when they're alone: women " +
+    "walking or commuting solo, late-night and shift workers, anyone meeting someone new from a " +
+    "dating app or meeting clients alone for work, older adults and people who live by themselves, " +
+    "and people going through a lonely or low stretch who'd feel safer knowing someone is checking " +
+    "in. Be inclusive, respectful and non-judgmental; if a tip touches on feeling unsafe, isolated " +
+    "or in crisis, keep it warm and, when it fits naturally, note that help is there (in the US you " +
+    "can call or text 988). Write for a UNITED STATES audience: American English spelling and idioms, " +
+    "US references, dollars ($). You ALWAYS respond with a single valid JSON object and nothing else.";
 
   const prompt = `Create the text for ONE daily One Tap Alert poster (a designed graphic with a short safety tip).
 
